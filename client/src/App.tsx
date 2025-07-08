@@ -1,10 +1,41 @@
-function App() {
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+import RequireAuth from './RequireAuth';
+import LoginPage from './LoginPage.tsx';
+import LogoutPage from './LogoutPage.tsx';
+import ProtectedPage from './ProtectedPage.tsx';
+import RegisterPage from './RegisterPage.tsx';
 
-  return (
-    <div className="bg-red-500">
-      Hello World
-    </div>
-  )
+function RedirectIfAuth({ children }: { children: React.ReactNode }) {
+  const jwt = localStorage.getItem('jwt');
+  if (jwt) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
+        <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <ProtectedPage />
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
