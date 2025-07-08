@@ -1,0 +1,150 @@
+PlateAI: Application Specification
+Version: 1.0
+Date: July 9, 2024
+
+1. Application Overview
+PlateAI is a mobile and web application designed to help users track their daily food intake and nutritional information effortlessly. Users can input what they ate using natural language, and the application will automatically analyze the text to provide a breakdown of calories, fat, protein, and carbohydrates for each food item. The app provides a simple, notebook-like interface for creating, editing, and reviewing meal entries, helping users stay mindful of their dietary habits.
+
+2. Core Functionality
+2.1. User Account Management
+User Sign-up: New users can create an account using their name, email address, and a password.
+
+User Sign-in: Registered users can sign in to access their meal history and log new entries.
+
+Authentication: User sessions are managed via JSON Web Tokens (JWT) to secure API endpoints.
+
+2.2. Meal Logging and Analysis
+Natural Language Input: Users can type a description of their meal in plain English (e.g., "I had a bowl of oatmeal with berries and a glass of orange juice").
+
+Automated Nutritional Analysis: The app will parse the user's input and return a detailed nutritional breakdown for each identified food item.
+
+Editable Entries: Users can review the analyzed nutritional data, make edits to the components or their values if needed.
+
+Save/Discard: Users can save the final meal entry to their log or discard it. Each saved entry is timestamped.
+
+2.3. Meal History
+View Past Meals: Users can browse a chronological list of all their previously saved meals.
+
+View Meal Details: Users can select a specific meal from their history to view its full nutritional breakdown.
+
+Update and Delete: Users have the ability to update or delete past meal entries.
+
+3. API Endpoints
+The backend will expose the following RESTful API endpoints. All endpoints that require authentication must include a valid JWT in the Authorization header as a Bearer token.
+
+3.1. User Authentication (/api/auth)
+POST /signup: User Registration
+
+Description: Creates a new user account.
+
+Request Body: { "name": "...", "email": "...", "password": "..." }
+
+Success Response (201): { "userId": "...", "token": "..." }
+
+POST /signin: User Login
+
+Description: Authenticates a user and provides a JWT.
+
+Request Body: { "email": "...", "password": "..." }
+
+Success Response (200): { "userId": "...", "token": "..." }
+
+3.2. Meal Management (/api/meals)
+POST /analyze: Analyze a Meal Description
+
+Description: Processes a natural language query to return nutritional data. Does not save the meal.
+
+Authorization: Required.
+
+Request Body: { "description": "..." }
+
+Success Response (200): { "components": [...] }
+
+POST /: Save a Meal
+
+Description: Saves a complete meal entry to the user's log.
+
+Authorization: Required.
+
+Request Body: { "meal_date": "...", "description": "...", "components": [...] }
+
+Success Response (201): { "mealId": "...", "message": "..." }
+
+GET /: Get All Meals for a User
+
+Description: Retrieves a summary list of all meals for the logged-in user.
+
+Authorization: Required.
+
+Success Response (200): [ { "mealId": "...", "meal_date": "...", "description": "...", "total_calories": ... }, ... ]
+
+GET /:mealId: Get a Specific Meal
+
+Description: Retrieves the full details for a single meal.
+
+Authorization: Required.
+
+Success Response (200): { "mealId": "...", "meal_date": "...", "description": "...", "components": [...] }
+
+PUT /:mealId: Update a Meal
+
+Description: Updates the details of an existing meal.
+
+Authorization: Required.
+
+Request Body: { "meal_date": "...", "description": "...", "components": [...] }
+
+Success Response (200): { "mealId": "...", "message": "..." }
+
+DELETE /:mealId: Delete a Meal
+
+Description: Removes a meal from the user's log.
+
+Authorization: Required.
+
+Success Response (204): No content.
+
+4. Database Schema (PostgreSQL)
+The application will use a PostgreSQL database with the following schema to persist data.
+
+4.1. users Table
+Stores user account information.
+
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+4.2. meals Table
+Stores high-level information for each meal entry.
+
+CREATE TABLE meals (
+    meal_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    meal_date TIMESTAMPTZ NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+4.3. meal_components Table
+Stores the detailed nutritional breakdown for each food item within a meal.
+
+CREATE TABLE meal_components (
+    component_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    meal_id UUID NOT NULL REFERENCES meals(meal_id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    calories NUMERIC(10, 2) NOT NULL,
+    fat_g NUMERIC(10, 2) NOT NULL,
+    protein_g NUMERIC(10, 2) NOT NULL,
+    carbs_g NUMERIC(10, 2) NOT NULL
+);
+
+4.4. Indexes
+Indexes to improve query performance.
+
+CREATE INDEX idx_meals_user_id ON meals(user_id);
+CREATE INDEX idx_meal_components_meal_id ON meal_components(meal_id);
