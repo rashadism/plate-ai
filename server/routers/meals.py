@@ -6,10 +6,11 @@ from uuid import UUID
 from utils.database import get_db
 from models.meal import Meal, MealComponent
 from models.user import User
-from schemas.meal import MealCreate, MealComponentCreate, MealComponentRead, MealRead, MealSummary
+from schemas.meal import MealCreate, MealComponentCreate, MealComponentRead, MealRead, MealSummary, MealAnalysisResponse, MealAnalysisForLLM
 from jose import JWTError, jwt
 from settings import settings
 from datetime import datetime
+from utils.llm import client
 
 router = APIRouter()
 
@@ -35,29 +36,37 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 # POST /analyze (dummy implementation)
-@router.post("/analyze", status_code=200)
+@router.post("/analyze", status_code=200, response_model=MealAnalysisResponse)
 def analyze_meal(request: dict, current_user: User = Depends(get_current_user)):
     description = request.get("description")
     if not isinstance(description, str):
         raise HTTPException(status_code=400, detail="description must be a string")
-    return {
-        "components": [
-            {
-                "name": "Oatmeal",
-                "calories": 150,
-                "fat_g": 3,
-                "protein_g": 5,
-                "carbs_g": 27
-            },
-            {
-                "name": "Orange Juice",
-                "calories": 110,
-                "fat_g": 0.5,
-                "protein_g": 2,
-                "carbs_g": 25
-            }
-        ]
-    }
+
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"Identify the food items in the following description and break into components and estimate the nutritional information for each component. If no components are detected, return an empty list. Description: {description}",
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": MealAnalysisForLLM,
+        },
+    )
+    
+    # Parse the LLM response
+    if response.text:
+        llm_result = MealAnalysisForLLM.model_validate_json(response.text)
+        # Convert to MealAnalysisResponse format
+        return MealAnalysisResponse(
+            components=[
+                MealComponentCreate(
+                    name=comp.name,
+                    calories=comp.calories,
+                    fat_g=comp.fat_g,
+                    protein_g=comp.protein_g,
+                    carbs_g=comp.carbs_g
+                ) for comp in llm_result.components
+            ]
+        )
 
 # POST / (Save a Meal)
 @router.post("/", status_code=201)
