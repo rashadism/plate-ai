@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from utils.database import engine, Base
 from routers import auth
+from routers import meals
 
 app = FastAPI(title="PlateAI API", version="1.0")
 
@@ -9,7 +10,8 @@ app = FastAPI(title="PlateAI API", version="1.0")
 def read_root() -> dict[str, str]:
     return {"message": "PlateAI server is running."} 
 
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(meals.router, prefix="/api/meals", tags=["meals"])
 
 # Meals router
 
