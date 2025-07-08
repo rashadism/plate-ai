@@ -13,6 +13,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+DB_SCHEMA=public
+```
+
+Adjust the values as needed for your PostgreSQL setup.
+
 ## Running the Server
 ```bash
 uvicorn main:app --reload
