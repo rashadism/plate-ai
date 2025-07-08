@@ -4,7 +4,6 @@ const Navbar = () => (
   <nav className="flex items-center justify-between px-8 py-4 bg-gradient-to-r from-lime-200 via-yellow-100 to-orange-200 shadow-lg rounded-b-2xl border-b border-orange-300">
     <div className="flex items-center gap-3">
       <Logo />
-      <span className="ml-2 text-lg font-medium text-orange-700 tracking-wide">Your Food Diary</span>
     </div>
     <a
       href="/logout"

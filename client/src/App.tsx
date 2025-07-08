@@ -7,7 +7,7 @@ import {
 import RequireAuth from './RequireAuth';
 import LoginPage from './LoginPage.tsx';
 import LogoutPage from './LogoutPage.tsx';
-import ProtectedPage from './ProtectedPage.tsx';
+import DashboardPage from './DashboardPage.tsx';
 import RegisterPage from './RegisterPage.tsx';
 
 function RedirectIfAuth({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,7 @@ function App() {
           path="/"
           element={
             <RequireAuth>
-              <ProtectedPage />
+              <DashboardPage />
             </RequireAuth>
           }
         />
