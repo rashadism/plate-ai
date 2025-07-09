@@ -21,12 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create non-root user for security
-RUN useradd -m -u 10001 appuser && \
-    chown -R appuser:appuser /app
+RUN addgroup -g 10016 choreo && \
+    adduser  --disabled-password  --no-create-home --uid 10016 --ingroup choreo choreouser
 
-# Switch to non-root user
-USER appuser
+# Switch to the new user
+USER 10016
 
 # Expose port
 EXPOSE 8000
