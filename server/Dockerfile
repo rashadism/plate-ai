@@ -21,8 +21,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-RUN addgroup -g 10016 choreo && \
-    adduser  --disabled-password  --no-create-home --uid 10016 --ingroup choreo choreouser
+RUN addgroup --gid 10016 choreo && \
+    adduser --disabled-password --no-create-home --uid 10016 --ingroup choreo choreouser
 
 # Switch to the new user
 USER 10016
